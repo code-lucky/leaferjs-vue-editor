@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { App, Rect, PointerEvent, Image, Box, Text, WatchEvent, Event } from 'leafer-ui'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { App, KeyEvent, PointerEvent, Image, Box, Text, WatchEvent, Event } from 'leafer-ui'
 import '@leafer-in/text-editor'
 import { Ruler } from 'leafer-x-ruler'
 import '@leafer-in/view'
@@ -8,6 +8,9 @@ import { useThrottle, getAssetsFile } from '../../utils/common'
 import { useElementStore } from '../../stores/elementStore';
 import { useTextStore } from '../../stores/textStore';
 import { useHandleStore } from '../../stores/handleStore';
+import { useBoxStore } from '../../stores/boxStore'
+import ContextMenu from '../../components/ContextMenu.vue'
+
 const handleStore = useHandleStore()
 const elementStore = useElementStore()
 
@@ -15,6 +18,27 @@ const elementData = computed(() => elementStore.elementData);
 
 const textStore = useTextStore()
 const textData = computed(() => textStore.textData);
+
+
+// 监听box尺寸变化
+const boxStore = useBoxStore()
+const boxWidth = computed(() => boxStore.width)
+const boxHeight = computed(() => boxStore.height)
+const boxBgColor = computed(() => boxStore.bgColor)
+watch(boxWidth, (newVal: number) => {
+    // 修改box尺寸
+    box.width = newVal
+})
+
+watch(boxHeight, (newVal: number) => {
+    // 修改box尺寸
+    box.height = newVal
+})
+
+watch(boxBgColor, (newVal: string) => {
+    // 修改box背景颜色
+    box.fill = newVal
+})
 
 // 监听点击了元素
 watch(elementData, (newVal: any) => {
@@ -34,7 +58,7 @@ watch(elementData, (newVal: any) => {
     image.on(PointerEvent.TAP, (event: Event) => {
         console.log(image)
         handleStore.setActiveTool('image')
-        event.stop()
+        // event.stop()
     })
 
     // 重置elementData
@@ -50,10 +74,10 @@ watch(textData, (newVal: any) => {
     const text = Text.one(
         {
             ...newVal,
-            width: 100,
-            height: 30,
-            x: box.width ? box.width / 2 - 40 : 0,
-            y: box.height ? box.height / 2 - 15 : 0,
+            width: 400,
+            height: 100,
+            x: box.width ? box.width / 2 - 200 : 0,
+            y: box.height ? box.height / 2 - 250 : 0,
             textAlign: 'center',
         }
     )
@@ -61,7 +85,7 @@ watch(textData, (newVal: any) => {
     text.on(PointerEvent.TAP, (event: Event) => {
         console.log('text tap')
         handleStore.setActiveTool('text')
-        event.stop()
+        // event.stop()
     })
 
     box.add(text)
@@ -105,7 +129,7 @@ onMounted(() => {
         ground: {
             type: 'design',
         },
-        zoom: { min: 1, max: 256 },
+        zoom: { min: 0.1, max: 256 },
         wheel: {
             zoomMode: 'mouse',
         },
@@ -117,8 +141,8 @@ onMounted(() => {
     ruler.enabled = true
 
     box = new Box({
-        width: 400,
-        height: 500,
+        width: 1242,
+        height: 1660,
         fill: '#FFF',
         draggable: true,
         editable: true,
@@ -161,14 +185,30 @@ onMounted(() => {
 
 
     box.on(PointerEvent.TAP, (event: Event) => {
+        console.log('box tap', event.target)
         console.log('box tap')
         handleStore.setActiveTool('box')
+        event.stop()
+    })
+
+    box.on(PointerEvent.MENU_TAP, (event: PointerEvent) => {
+        console.log('box down', event.target)
+        const { x, y } = event;
+        menuPosition.value.x = x;
+        menuPosition.value.y = y;
+        menuVisible.value = true;
+    })
+
+    box.on(KeyEvent.HOLD, (event: KeyEvent) => {
+        console.log('box hold', event)
         event.stop()
     })
 
     box.on(WatchEvent.DATA, (e: WatchEvent) => {
         console.log('box watch tap', e)
     })
+
+    document.addEventListener('click', handleClickOutside)
 })
 
 const handleSizeChange = (app: App) => {
@@ -189,10 +229,40 @@ const handleToolClick = (type: string) => {
         app.tree.zoom('out')
     }
 }
+
+const menuVisible = ref(false)
+const menuPosition = ref({ x: 0, y: 0 })
+
+// 隐藏菜单
+const onContextMenu = () => {
+    menuVisible.value = false;
+};
+
+// 处理菜单操作
+const handleMenuAction = (action: string) => {
+    console.log('菜单操作:', action);
+    menuVisible.value = false;
+
+    // 示例：根据 action 执行操作
+    if (action === 'delete') {
+        console.log('删除图形功能待实现');
+    }
+};
+
+const handleClickOutside = (event: MouseEvent) => {
+    const menuElement = document.querySelector('.context-menu-selector'); // 替换为实际的上下文菜单选择器
+    if (menuElement && !menuElement.contains(event.target as Node)) {
+        menuVisible.value = false;
+    }
+};
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
-    <div id="leafer-view" class="w-full h-full relative">
+    <div id="leafer-view" class="w-full h-full relative" @contextmenu.prevent="onContextMenu">
         <div
             class="h-[50px] bg-white absolute bottom-[20px] right-[20px] rounded-[10px] min-w-[180px] flex gap-2 items-center px-4 z-9999">
             <div v-for="item in toolList" :key="item.title"
@@ -201,6 +271,9 @@ const handleToolClick = (type: string) => {
                 <img :src="getAssetsFile(item.icon)" alt="icon" class="w-[20px] h-[20px]">
             </div>
         </div>
+
+        <ContextMenu v-if="menuVisible" :x="menuPosition.x" :y="menuPosition.y" @menu-action="handleMenuAction" />
+
     </div>
 </template>
 

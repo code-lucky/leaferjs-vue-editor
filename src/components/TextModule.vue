@@ -33,7 +33,7 @@ const list = ref<any[]>([
                     "fill": "#000",
                     "text": "默认文字",
                     "fontFamily": "Arial",
-                    "fontSize": 20,
+                    "fontSize": 68,
                     "draggable": true,
                     "editable": true,
                     "origin": "center"

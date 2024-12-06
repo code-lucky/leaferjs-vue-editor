@@ -1,9 +1,13 @@
 <template>
-    <div class="w-full relative" @click="showColorPicker = false">
-        <div class="flex items-center">
-            <div>选择背景颜色：</div>
-            <div class="w-[40px] h-[40px] rounded-md border-2 border-gray-300 cursor-pointer flex items-center justify-center"
-                @click.stop="showColorPicker = !showColorPicker">
+    <div class="w-full">
+        <a-popover v-model:open="showColorPicker" trigger="click" title="" placement="bottom">
+            <template #content>
+                <div class="w-[220px] mt-2 z-9999 h-[338px]" @click.stop>
+                    <ColorPicker @changeColor="changeColor" style="width: 100%;" />
+                </div>
+            </template>
+            <div @click.stop="showColorPicker = !showColorPicker"
+                class="w-[40px] h-[40px] rounded-md border-2 border-gray-300 cursor-pointer flex items-center justify-center">
                 <div class="w-[30px] h-[30px] rounded-md flex items-center justify-center"
                     :style="{ backgroundColor: pickerColor }">
                     <img v-if="['#ffffff', '#fff', 'rgba(255, 255, 255, 1)', '#FFFFFF', '#FFF'].includes(pickerColor)"
@@ -11,12 +15,7 @@
                     <img v-else src="@/assets/icons/arr-down.svg" alt="arrow" class="w-[24px] h-[24px] ">
                 </div>
             </div>
-        </div>
-        <transition name="expand">
-            <div class="w-[220px] mt-2 z-9999 h-[338px] absolute top-[40px] left-0" v-if="showColorPicker" @click.stop>
-                <ColorPicker @changeColor="changeColor" style="width: 100%;" />
-            </div>
-        </transition>
+        </a-popover>
     </div>
 </template>
 

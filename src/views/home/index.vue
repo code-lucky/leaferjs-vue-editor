@@ -9,9 +9,18 @@ import { useElementStore } from '../../stores/elementStore';
 import { useTextStore } from '../../stores/textStore';
 import { useHandleStore } from '../../stores/handleStore';
 import { useBoxStore } from '../../stores/boxStore'
-import ContextMenu from '../../components/ContextMenu.vue'
+import ContextMenu from '@/components/ContextMenu.vue'
 
-const handleStore = useHandleStore()
+type SelectableElement = {
+    destroy: () => void;
+    clone: () => SelectableElement;
+    toJSON: () => any;
+};
+
+const handleStore = useHandleStore() as {
+    selectElement: SelectableElement | null,
+    activeTool?: string, // Add this line
+}
 const elementStore = useElementStore()
 
 const elementData = computed(() => elementStore.elementData);
@@ -55,21 +64,12 @@ watch(elementData, (newVal: any) => {
     });
     box.add(image);
 
-    image.on(PointerEvent.TAP, (event: Event) => {
-        console.log(image)
-        handleStore.setActiveTool('image')
-        // event.stop()
-    })
-
     // 重置elementData
     elementStore.setElementData(null)
 });
 
 watch(textData, (newVal: any) => {
     if (!newVal) return;
-
-    console.log(newVal)
-
     // 添加文字
     const text = Text.one(
         {
@@ -81,15 +81,7 @@ watch(textData, (newVal: any) => {
             textAlign: 'center',
         }
     )
-
-    text.on(PointerEvent.TAP, (event: Event) => {
-        console.log('text tap')
-        handleStore.setActiveTool('text')
-        // event.stop()
-    })
-
     box.add(text)
-
     // 重置textData
     textStore.setTextData(null)
 })
@@ -185,14 +177,27 @@ onMounted(() => {
 
 
     box.on(PointerEvent.TAP, (event: Event) => {
-        console.log('box tap', event.target)
-        console.log('box tap')
-        handleStore.setActiveTool('box')
+        // console.log('box tap', event.target)
+        if (event.target === box) {
+            console.log('box tap');
+            handleStore.activeTool = 'box';
+        } else if (event.target instanceof Text) {
+            console.log('text tap');
+            handleStore.activeTool = 'text';
+        } else if (event.target instanceof Image) {
+            console.log('image tap');
+            handleStore.activeTool = 'image';
+        }
+        menuVisible.value = false
         event.stop()
     })
 
     box.on(PointerEvent.MENU_TAP, (event: PointerEvent) => {
-        console.log('box down', event.target)
+        console.log('box menu tap', event.target)
+        if(event.target instanceof Box){
+            return
+        }
+        handleStore.selectElement = event.target as unknown as SelectableElement
         const { x, y } = event;
         menuPosition.value.x = x;
         menuPosition.value.y = y;
@@ -243,9 +248,31 @@ const handleMenuAction = (action: string) => {
     console.log('菜单操作:', action);
     menuVisible.value = false;
 
-    // 示例：根据 action 执行操作
     if (action === 'delete') {
         console.log('删除图形功能待实现');
+        // 删除选中的元素
+        if (handleStore.selectElement) {
+            handleStore.selectElement.destroy()
+            return
+        }
+    }
+
+    // 复制
+    if (action === 'copy') {
+        console.log('复制图形功能待实现');
+        if (handleStore.selectElement) {
+            const copyElement = handleStore.selectElement.toJSON()
+            // 获取随机数130以内
+            const randomX = Math.floor(Math.random() * 130)
+            const randomY = Math.floor(Math.random() * 130)
+            box.add(
+                {
+                    ...copyElement,
+                    x: copyElement.x + randomX,
+                    y: copyElement.y + randomY,
+                }
+            )
+        }
     }
 };
 

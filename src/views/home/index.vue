@@ -15,6 +15,8 @@ type SelectableElement = {
     destroy: () => void;
     clone: () => SelectableElement;
     toJSON: () => any;
+    zIndex: number;
+    parent: { children: SelectableElement[] };
 };
 
 const handleStore = useHandleStore() as {
@@ -52,17 +54,17 @@ watch(boxBgColor, (newVal: string) => {
 // 监听点击了元素
 watch(elementData, (newVal: any) => {
     if (!newVal) return;
-    const assetPath = getAssetsFile(`element/${newVal}`);
-    const image = new Image({
-        width: 100,
-        height: 100,
-        url: assetPath,
-        draggable: true,
-        editable: true,
-        x: box.width ? box.width / 2 - 50 : 0,
-        y: box.height ? box.height / 2 - 50 : 0,
-    });
-    box.add(image);
+    // const assetPath = getAssetsFile(`element/${newVal}`);
+    
+    console.log(newVal)
+
+    const element = {
+        ...newVal,
+        x: box.width ? box.width / 2 - 200 : 0,
+        y: box.height ? box.height / 2 - 200 : 0,
+    }
+
+    box.add(element);
 
     // 重置elementData
     elementStore.setElementData(null)
@@ -71,7 +73,7 @@ watch(elementData, (newVal: any) => {
 watch(textData, (newVal: any) => {
     if (!newVal) return;
     // 添加文字
-    const text = Text.one(
+    const text = new Text(
         {
             ...newVal,
             width: 400,
@@ -79,6 +81,7 @@ watch(textData, (newVal: any) => {
             x: box.width ? box.width / 2 - 200 : 0,
             y: box.height ? box.height / 2 - 250 : 0,
             textAlign: 'center',
+            zIndex: 0,
         }
     )
     box.add(text)
@@ -145,27 +148,23 @@ onMounted(() => {
 
 
 
-    // 画一个文字
-    // const text = new Text({
-    //     text: '默认文字',
+    // 画一个圆角矩形
+    // const rect = new Polygon({
+    //     width: 400,
+    //     height: 400,
+    //     fill: '#000',
     //     editable: true,
     //     draggable: true,
-    //     textAlign: 'center',
-    //     fontSize: 28,
-    //     fontFamily: 'Arial',
-    //     fill: 'rgb(254,74,44)',
-    //     fontWeight: 'bold',
-    //     letterSpacing: 1.2
+    //     x: box.width ? box.width / 2 - 200 : 0,
+    //     y: box.height ? box.height / 2 - 200 : 0,
+    //     zIndex: 0,
+    //     sides: 3
+    // })
+    // rect.export('png', 1).then(result => {
+    //     console.log(result.data)
     // })
 
-    // console.log(text.toJSON())
-
-    // text.export('png', { pixelRatio: 2 }).then((res: any) => {
-    //     console.log(res)
-    // })
-
-    // box.add(text)
-
+    // box.add(rect)
 
     // 防抖
     const handleSize = useThrottle(handleSizeChange, 100)
@@ -189,12 +188,13 @@ onMounted(() => {
             handleStore.activeTool = 'image';
         }
         menuVisible.value = false
+        handleStore.selectElement = event.target as unknown as SelectableElement
         event.stop()
     })
 
     box.on(PointerEvent.MENU_TAP, (event: PointerEvent) => {
         console.log('box menu tap', event.target)
-        if(event.target instanceof Box){
+        if (event.target instanceof Box) {
             return
         }
         handleStore.selectElement = event.target as unknown as SelectableElement
@@ -204,16 +204,61 @@ onMounted(() => {
         menuVisible.value = true;
     })
 
-    box.on(KeyEvent.HOLD, (event: KeyEvent) => {
-        console.log('box hold', event)
-        event.stop()
-    })
+    // box.on(KeyEvent.UP, (event: KeyEvent) => {
+    //     console.log('box hold', event)
+    // })
 
     box.on(WatchEvent.DATA, (e: WatchEvent) => {
         console.log('box watch tap', e)
     })
 
     document.addEventListener('click', handleClickOutside)
+
+
+    // 监听键盘事件
+    document.addEventListener('keydown', (event: KeyboardEvent) => {
+        // 点击删除
+        if (event.key === 'Delete') {
+            if (handleStore.selectElement && !(handleStore.selectElement instanceof Box)) {
+                handleStore.selectElement.destroy()
+            }
+        }
+
+        // 组合键
+        if (event.ctrlKey && event.key === 'z') {
+            console.log('撤销')
+        }
+
+        // ctrl + c
+        if (event.ctrlKey && event.key === 'c') {
+            console.log('复制')
+            if (handleStore.selectElement) {
+                const copyElement = handleStore.selectElement.toJSON()
+                // 随机偏移
+                const randomX = Math.floor(Math.random() * 130)
+                const randomY = Math.floor(Math.random() * 130)
+                const data = {
+                    ...copyElement,
+                    x: copyElement.x + randomX,
+                    y: copyElement.y + randomY,
+                }
+                
+                // 复制到剪切板
+                navigator.clipboard.writeText(JSON.stringify(data))
+            }
+        }
+
+        // ctrl + v
+        if (event.ctrlKey && event.key === 'v') {
+            console.log('粘贴')
+            // 从剪切板粘贴
+            navigator.clipboard.readText().then(text => {
+                console.log(text)
+                const data = JSON.parse(text)
+                box.add(data)
+            })
+        }
+    })
 })
 
 const handleSizeChange = (app: App) => {
@@ -272,6 +317,41 @@ const handleMenuAction = (action: string) => {
                     y: copyElement.y + randomY,
                 }
             )
+        }
+    }
+
+    // 上移一层
+    if (action === 'move-up') {
+        console.log('上移一层功能待实现');
+        if (handleStore.selectElement) {
+            handleStore.selectElement.zIndex++
+        }
+    }
+
+    if (action === 'move-down') {
+        console.log('下移一层功能待实现');
+        if (handleStore.selectElement) {
+            handleStore.selectElement.zIndex--
+        }
+    }
+
+    // 移到顶层
+    if (action === 'move-top') {
+        if (handleStore.selectElement) {
+            let maxZIndex = handleStore.selectElement.parent.children.reduce((max, element) => {
+                return element.zIndex > max ? element.zIndex : max;
+            }, 0);
+
+            handleStore.selectElement.zIndex = maxZIndex + 1;
+
+            console.log(maxZIndex)
+        }
+    }
+
+    // 移到底层
+    if (action === 'move-bottom') {
+        if (handleStore.selectElement) {
+            handleStore.selectElement.zIndex = 0
         }
     }
 };

@@ -51,8 +51,8 @@ const handleTabClick = (key: string) => {
     activeKey.value = key
 }
 
-const handleElementClick = (icon: string) => {
-    elementStore.setElementData(icon)
+const handleElementClick = (json: any) => {
+    elementStore.setElementData(json)
 }
 
 const handleTextClick = (json: any) => {

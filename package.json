@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@iconify/vue": "^4.2.0",
     "@leafer-in/flow": "^1.0.10",
     "@leafer-in/text-editor": "^1.0.10",
     "@leafer-in/view": "^1.0.10",

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { App, KeyEvent, PointerEvent, Image, Box, Text, WatchEvent, Event } from 'leafer-ui'
+import { App, Rect, PointerEvent, Image, Box, Text, WatchEvent, Event, DragEvent, MoveEvent } from 'leafer-ui'
 import '@leafer-in/text-editor'
 import { Ruler } from 'leafer-x-ruler'
 import '@leafer-in/view'
@@ -55,7 +55,7 @@ watch(boxBgColor, (newVal: string) => {
 watch(elementData, (newVal: any) => {
     if (!newVal) return;
     // const assetPath = getAssetsFile(`element/${newVal}`);
-    
+
     console.log(newVal)
 
     const element = {
@@ -118,9 +118,13 @@ const toolList = ref<{ icon: string; title: string; type: string }[]>([
 onMounted(() => {
     app = new App({
         view: 'leafer-view',
-        tree: {},
+        tree: {
+            type: 'design',
+        },
         editor: {},
-        sky: {},
+        sky: {
+            type: 'design',
+        },
         ground: {
             type: 'design',
         },
@@ -136,35 +140,16 @@ onMounted(() => {
     ruler.enabled = true
 
     box = new Box({
+        id: 'main',
         width: 1242,
         height: 1660,
         fill: '#FFF',
-        draggable: true,
+        draggable: false,
         editable: true,
         overflow: 'hide',
     })
 
     app.tree.add(box)
-
-
-
-    // 画一个圆角矩形
-    // const rect = new Polygon({
-    //     width: 400,
-    //     height: 400,
-    //     fill: '#000',
-    //     editable: true,
-    //     draggable: true,
-    //     x: box.width ? box.width / 2 - 200 : 0,
-    //     y: box.height ? box.height / 2 - 200 : 0,
-    //     zIndex: 0,
-    //     sides: 3
-    // })
-    // rect.export('png', 1).then(result => {
-    //     console.log(result.data)
-    // })
-
-    // box.add(rect)
 
     // 防抖
     const handleSize = useThrottle(handleSizeChange, 100)
@@ -242,7 +227,7 @@ onMounted(() => {
                     x: copyElement.x + randomX,
                     y: copyElement.y + randomY,
                 }
-                
+
                 // 复制到剪切板
                 navigator.clipboard.writeText(JSON.stringify(data))
             }
@@ -264,8 +249,101 @@ onMounted(() => {
 const handleSizeChange = (app: App) => {
     setTimeout(() => {
         app.tree.zoom('fit', 200)
+
+        // setTimeout(() => {
+        //     setSkyPosition(app)
+        // }, 100)
+
     }, 100)
 }
+
+// const setSkyPosition = (app: App) => {
+//     // 获取整个app的宽高
+//     const appWidth = app.width ? app.width : 0
+//     const appHeight = app.height ? app.height : 0
+
+//     // 获取app.tree的x和y
+//     const appTreeX = app.tree.x ? app.tree.x : 0
+//     const appTreeY = app.tree.y ? app.tree.y : 0
+
+//     // 获取app.tree的scale
+//     const appTreeScale = app.tree.scale ? Number(app.tree.scale) : 1
+//     console.log('app tree scale', appTreeScale)
+
+//     // 获取app.tree下的main的width和height
+//     const mainWidth = app.tree.children.find((child: any) => child.id === 'main')?.width ? app.tree.children.find((child: any) => child.id === 'main')?.width : 0
+//     const mainHeight = app.tree.children.find((child: any) => child.id === 'main')?.height ? app.tree.children.find((child: any) => child.id === 'main')?.height : 0
+
+//     const mainScaleWidth = mainWidth ? mainWidth * appTreeScale : 0
+//     const mainScaleHeight = mainHeight ? mainHeight * appTreeScale : 0
+
+//     app.sky.children.forEach((child: any) => {
+//         if (child.id === 'left') {
+//             child.x = appTreeX ? appTreeX - 4 - 10 : 0
+//             child.y = appTreeY ? appHeight / 2 : 0
+//         } else if (child.id === 'right') {
+//             child.x = appTreeX ? appTreeX + mainScaleWidth + 10 : 0
+//             child.y = appTreeY ? appHeight / 2 : 0
+//         } else if (child.id === 'top') {
+//             child.x = appTreeX ? appWidth / 2 : 0
+//             child.y = appTreeY ? appTreeY - 4 - 10 : 0
+//         } else if (child.id === 'bottom') {
+//             child.x = appTreeX ? appWidth / 2 : 0
+//             child.y = appTreeY ? appTreeY + mainScaleHeight + 10 : 0
+//         }
+
+//         let initialX = 0;
+//         let initialY = 0;
+
+//         // 开始拖动，获取初始值
+//         child.on(MoveEvent.START, (event: MoveEvent) => {
+//             console.log('sky start', event);
+//             initialX = event.x;
+//             initialY = event.y;
+//         });
+
+//         // 拖动事件
+//         child.on(DragEvent.DRAG, useThrottle((event: MoveEvent) => {
+//             console.log('sky drag', event);
+
+//             // 计算偏移量，考虑缩放
+//             const scale = app.tree.scale ? Number(app.tree.scale) : 1;
+//             const offsetX = (event.x - initialX) / scale;
+//             const offsetY = (event.y - initialY) / scale;
+
+//             // 判断是哪个方向
+//             if (child.id === 'right') {
+//                 // 计算box的宽度，偏移量不一定是距离
+//                 const boxWidth = box.width ? box.width : 0;
+//                 box.width = boxWidth + offsetX;
+//                 child.x = initialX + offsetX * scale;
+//             } else if (child.id === 'bottom') {
+//                 const boxHeight = box.height ? box.height : 0;
+//                 box.height = boxHeight + offsetY;
+//                 child.y = initialY + offsetY * scale;
+//             }
+//         }, 50));
+
+//         // 按住拖动
+//         child.on(PointerEvent.DOWN, (event: PointerEvent) => {
+//             console.log('sky long press', event)
+//             initialX = event.x
+//             initialY = event.y
+//             // 长按时，变色
+//             child.fill = 'blue'
+//         })
+
+//         // 松开时，恢复颜色
+//         child.on(PointerEvent.UP, (event: PointerEvent) => {
+//             console.log('sky up', event)
+//             child.fill = '#333'
+//         })
+//     })
+
+//     setTimeout(() => {
+//         app.tree.zoom('fit', 200)
+//     }, 100)
+// }
 
 const handleToolClick = (type: string) => {
     console.log(type)

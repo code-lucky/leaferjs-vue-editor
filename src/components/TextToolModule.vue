@@ -21,29 +21,34 @@
             <div class="flex gap-2 flex-wrap">
                 <div class="flex items-center gap-2 bg-gray-100 rounded-md px-2 py-1">
                     <div class="w-[20px] text-center text-gray-500">W</div>
-                    <input type="number" class="w-[50px] h-[30px] bg-gray-100 rounded-md outline-none" />
+                    <input v-model="formData.width" type="number"
+                        class="w-[50px] h-[30px] bg-gray-100 rounded-md outline-none" />
                 </div>
 
                 <div class="flex items-center gap-2 bg-gray-100 rounded-md px-2 py-1">
                     <div class="w-[20px] text-center text-gray-500">H</div>
-                    <input type="number" class="w-[50px] h-[30px] bg-gray-100 rounded-md outline-none" />
+                    <input v-model="formData.height" type="number"
+                        class="w-[50px] h-[30px] bg-gray-100 rounded-md outline-none" />
                 </div>
 
                 <div class="flex items-center gap-2 bg-gray-100 rounded-md px-2 py-1">
                     <div class="w-[20px] text-center text-gray-500">X</div>
-                    <input type="number" class="w-[50px] h-[30px] bg-gray-100 rounded-md outline-none" />
+                    <input v-model="formData.x" type="number"
+                        class="w-[50px] h-[30px] bg-gray-100 rounded-md outline-none" />
                 </div>
 
                 <div class="flex items-center gap-2 bg-gray-100 rounded-md px-2 py-1">
                     <div class="w-[20px] text-center text-gray-500">Y</div>
-                    <input type="number" class="w-[50px] h-[30px] bg-gray-100 rounded-md outline-none" />
+                    <input v-model="formData.y" type="number"
+                        class="w-[50px] h-[30px] bg-gray-100 rounded-md outline-none" />
                 </div>
 
                 <div class="flex items-center gap-2 bg-gray-100 rounded-md px-2 py-1 active:border-blue-500">
                     <div class="w-[20px] text-center text-gray-500">
                         <Icon icon="hugeicons:angle-01" />
                     </div>
-                    <input type="number" class="w-[50px] h-[30px] bg-gray-100 rounded-md outline-none" />
+                    <input v-model="formData.rotate" type="number"
+                        class="w-[50px] h-[30px] bg-gray-100 rounded-md outline-none" />
                 </div>
             </div>
         </div>
@@ -63,10 +68,17 @@
 
                     <div class="w-full flex items-center gap-2">
                         <a-input-number v-model:value="formData.fontSize" class="flex-1" size="large" />
-                        <div
-                            class="w-[40px] h-[40px] rounded-md flex items-center justify-center border border-[#333] cursor-pointer">
-                            <Icon icon="mingcute:font-line" />
-                        </div>
+                        <a-popover v-model:open="showColorPicker" trigger="click" title="" placement="left">
+                            <template #content>
+                                <div class="w-[220px] mt-2 z-9999 h-[338px]" @click.stop>
+                                    <ColorPicker @changeColor="changeColor" style="width: 100%;" />
+                                </div>
+                            </template>
+                            <div class="w-[40px] h-[40px] rounded-md flex items-center justify-center border border-[#333] cursor-pointer"
+                                :style="{ backgroundColor: formData.fill }">
+                                <Icon icon="mingcute:font-line" :color="handleColor(formData.fill)" />
+                            </div>
+                        </a-popover>
                     </div>
                 </div>
             </div>
@@ -94,12 +106,16 @@
             </div>
             <div class="flex flex-col gap-2 w-full">
                 <div class="flex items-center gap-2 bg-gray-100 rounded-md py-1 h-[40px] w-full px-2">
-                    <div class="shrink-0 text-center text-gray-500 text-xs">行间距</div>
-                    <input type="number" class="bg-gray-100 rounded-md outline-none w-full" length="3" />
+                    <div class="shrink-0 text-center text-gray-500 text-xs">行高</div>
+                    <input type="number" v-model="formData.lineHeight.value"
+                        class="bg-gray-100 rounded-md outline-none w-full" length="3" />
+                    <div class="text-gray-500 text-sm">px</div>
                 </div>
                 <div class="flex items-center gap-2 bg-gray-100 rounded-md py-1 h-[40px] w-full px-2">
                     <div class="shrink-0 text-center text-gray-500 text-xs">字间距</div>
-                    <input type="number" class="bg-gray-100 rounded-md outline-none w-full" length="3" />
+                    <input type="number" v-model="formData.letterSpacing.value"
+                        class="bg-gray-100 rounded-md outline-none w-full" length="3" />
+                    <div class="text-gray-500 text-sm">px</div>
                 </div>
             </div>
         </div>
@@ -110,12 +126,21 @@
             <div class="flex gap-2">
                 <div class="flex items-center gap-2 bg-gray-100 rounded-md py-1 h-[40px] flex-1 px-2">
                     <div class="shrink-0 text-center text-gray-500 text-xs">尺寸</div>
-                    <input type="number" class="bg-gray-100 rounded-md outline-none w-full" length="3" />
-                    <div class="text-gray-500 text-sm">px</div>
+                    <input type="number" v-model="formData.strokeWidth"
+                        class="bg-gray-100 rounded-md outline-none w-full" length="3" />
+                    <!-- <div class="text-gray-500 text-sm">px</div> -->
                 </div>
-                <div class="flex items-center gap-2 rounded-md py-1 h-[40px] w-[40px] flex-shrink-0 justify-center cursor-pointer border border-gray-300">
-                    <Icon icon="iconoir:color-wheel" />
-                </div>
+                <a-popover v-model:open="showStrokeColorPicker" trigger="click" title="" placement="left">
+                    <template #content>
+                        <div class="w-[220px] mt-2 z-9999 h-[338px]" @click.stop>
+                            <ColorPicker @changeColor="changeStrokeColor" style="width: 100%;" />
+                        </div>
+                    </template>
+                    <div class="flex items-center gap-2 rounded-md py-1 h-[40px] w-[40px] flex-shrink-0 justify-center cursor-pointer border border-gray-300"
+                        :style="{ backgroundColor: formData.stroke }" @click="showStrokeColorPicker = true">
+                        <Icon icon="iconoir:color-wheel" :color="handleColor(formData.stroke)" />
+                    </div>
+                </a-popover>
             </div>
         </div>
 
@@ -150,20 +175,50 @@
     </div>
 </template>
 <script setup lang="ts">
-import { reactive } from 'vue'
 import { Icon } from '@iconify/vue';
+import { useTextStore } from '@/stores/textStore'
+import { useHandleStore } from '@/stores/handleStore'
+import { computed, ref, watch } from 'vue';
+import { ColorPicker } from 'vue-color-kit'
 
-const formData = reactive({
-    width: 100,
-    height: 100,
-    x: 0,
-    y: 0,
-    rotate: 0,
-    fontFamily: 'Arial',
-    fontSize: 16,
-    fontWeight: 'normal',
-    color: '#FFF',
+const textStore = useTextStore()
+const handleStore = useHandleStore()
+
+const formData = computed(() => textStore.formData)
+
+const showColorPicker = ref(false)
+const showStrokeColorPicker = ref(false)
+
+const changeColor = (color: any) => {
+    formData.value.fill = color.hex
+}
+
+const changeStrokeColor = (color: any) => {
+    formData.value.stroke = color.hex
+}
+
+// 监听formData的变化
+watch(formData, (newVal) => {
+    console.log(newVal)
+    handleStore.selectElement.set({
+        ...handleStore.selectElement.toJSON(),
+        ...newVal
+    })
+}, {
+    deep: true,
 })
+
+// const alignList = [
+//     width: 100,
+//     height: 100,
+//     x: 0,
+//     y: 0,
+//     rotate: 0,
+//     fontFamily: 'Arial',
+//     fontSize: 16,
+//     fontWeight: 'normal',
+//     color: '#FFF',
+// })
 
 const alignList = [
     {
@@ -288,5 +343,15 @@ const textEditList = [
 
 const handleChangeFontFamily = (value: string) => {
     console.log(value)
+}
+
+
+// 处理颜色，如果颜色是深色则用白色，否则用黑色
+const handleColor = (color: string) => {
+    const r = parseInt(color.slice(1, 3), 16)
+    const g = parseInt(color.slice(3, 5), 16)
+    const b = parseInt(color.slice(5, 7), 16)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return luminance > 0.5 ? '#000' : '#fff'
 }
 </script>

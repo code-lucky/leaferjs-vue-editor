@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { App, Rect, PointerEvent, Image, Box, Text, WatchEvent, Event, DragEvent, MoveEvent } from 'leafer-ui'
+import { App, Rect, PointerEvent, Image, Box, Text, WatchEvent, Event, DragEvent, MoveEvent, ResizeEvent } from 'leafer-ui'
 import '@leafer-in/text-editor'
 import { Ruler } from 'leafer-x-ruler'
 import '@leafer-in/view'
@@ -76,8 +76,6 @@ watch(textData, (newVal: any) => {
     const text = new Text(
         {
             ...newVal,
-            width: 400,
-            height: 100,
             x: box.width ? box.width / 2 - 200 : 0,
             y: box.height ? box.height / 2 - 250 : 0,
             textAlign: 'center',
@@ -162,19 +160,50 @@ onMounted(() => {
 
     box.on(PointerEvent.TAP, (event: Event) => {
         // console.log('box tap', event.target)
+        handleStore.selectElement = event.target as unknown as SelectableElement
         if (event.target === box) {
             console.log('box tap');
             handleStore.activeTool = 'box';
         } else if (event.target instanceof Text) {
             console.log('text tap');
+            const textData = event.target.toJSON()
+            console.log(textData)
+            textStore.setFormData(textData)
+
             handleStore.activeTool = 'text';
         } else if (event.target instanceof Image) {
             console.log('image tap');
             handleStore.activeTool = 'image';
         }
         menuVisible.value = false
-        handleStore.selectElement = event.target as unknown as SelectableElement
+        
         event.stop()
+    })
+
+    // 监听拖动
+    box.on(DragEvent.DRAG, (event: DragEvent) => {
+        if(handleStore.selectElement && handleStore.selectElement instanceof Text){
+            console.log('text drag', event.target.x, event.target.y)
+
+            // 修改text的x和y
+            handleStore.selectElement.x = event.target.x
+            handleStore.selectElement.y = event.target.y
+
+            // 获取JSON
+            const textData = handleStore.selectElement.toJSON()
+            console.log(textData)
+            textStore.setFormData(textData)
+        }
+    })
+
+    // 监听移动
+    box.on(MoveEvent.MOVE, (event: MoveEvent) => {
+        console.log('box move', event)
+    })
+
+    // 监听尺寸变化
+    box.on(ResizeEvent.RESIZE, (event: ResizeEvent) => {
+        console.log('box resize', event)
     })
 
     box.on(PointerEvent.MENU_TAP, (event: PointerEvent) => {

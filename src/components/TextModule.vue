@@ -29,6 +29,8 @@ const list = ref<any[]>([
                 title: '默认文字',
                 icon: 'default.png',
                 json: {
+                    "width": 400,
+                    "height": 100,
                     "tag": "Text",
                     "fill": "#000",
                     "text": "默认文字",
@@ -36,7 +38,24 @@ const list = ref<any[]>([
                     "fontSize": 68,
                     "draggable": true,
                     "editable": true,
-                    "origin": "center"
+                    "origin": "center",
+                    "lineHeight": {
+                        "type": "px",
+                        "value": 100
+                    },
+                    "letterSpacing": {
+                        "type": "px",
+                        "value": 10
+                    },
+                    "fontWeight": "normal",
+                    "stroke": "#000",
+                    "strokeWidth": 0,
+                    "shadow": {
+                        "x": 10,
+                        "y": -10,
+                        "blur": 20,
+                        "color": "red"
+                    }
                 }
             }
         ]

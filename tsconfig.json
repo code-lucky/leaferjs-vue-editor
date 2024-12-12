@@ -8,6 +8,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["*"]
-    }
+    },
+    "experimentalDecorators": true // 开启装饰器功能
   },
 }

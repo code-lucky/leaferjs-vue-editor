@@ -6,8 +6,7 @@
                 <div class="text-gray-500 text-sm">查看更多</div>
             </div>
             <div class="w-full flex flex-wrap gap-2">
-                <div v-for="(res, idx) in item.list" :key="idx"
-                    @click="handleTextClick(res.json)"
+                <div v-for="(res, idx) in item.list" :key="idx" @click="handleTextClick(res.json)"
                     class="w-[84px] h-[84px] bg-gray-100 rounded-md cursor-pointer hover:scale-105 transition-all duration-300 flex items-center justify-center px-4">
                     <img :src="getAssetsFile(`text/${res.icon}`)" alt="icon">
                 </div>
@@ -38,7 +37,6 @@ const list = ref<any[]>([
                     "fontSize": 68,
                     "draggable": true,
                     "editable": true,
-                    "origin": "center",
                     "lineHeight": {
                         "type": "px",
                         "value": 100
@@ -51,11 +49,13 @@ const list = ref<any[]>([
                     "stroke": "#000",
                     "strokeWidth": 0,
                     "shadow": {
-                        "x": 10,
-                        "y": -10,
-                        "blur": 20,
-                        "color": "red"
-                    }
+                        "x": 0,
+                        "y": 0,
+                        "blur": 0,
+                        "color": "#000"
+                    },
+                    "showShadow": false,
+                    "rotation": 0,
                 }
             }
         ]

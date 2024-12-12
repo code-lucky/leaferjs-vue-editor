@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { App, Rect, PointerEvent, Image, Box, Text, WatchEvent, Event, DragEvent, MoveEvent, ResizeEvent } from 'leafer-ui'
+import { App, PointerEvent, Image, Box, Text, WatchEvent, Event, DragEvent, MoveEvent, ResizeEvent, registerUI, dataProcessor, boundsType, TextData } from 'leafer-ui'
 import '@leafer-in/text-editor'
 import { Ruler } from 'leafer-x-ruler'
 import '@leafer-in/view'
@@ -10,6 +10,17 @@ import { useTextStore } from '../../stores/textStore';
 import { useHandleStore } from '../../stores/handleStore';
 import { useBoxStore } from '../../stores/boxStore'
 import ContextMenu from '@/components/ContextMenu.vue'
+
+// 添加Text的属性
+class CustomText extends Text {
+    get __tag() { return 'CustomText' }
+}
+
+CustomText.registerUI()
+// 添加属性，并指定属性处理器
+CustomText.addAttr('showShadow', false, boundsType)
+
+// end
 
 type SelectableElement = {
     destroy: () => void;
@@ -72,16 +83,32 @@ watch(elementData, (newVal: any) => {
 
 watch(textData, (newVal: any) => {
     if (!newVal) return;
+    console.log(newVal)
     // 添加文字
-    const text = new Text(
+    const text = new CustomText(
         {
             ...newVal,
-            x: box.width ? box.width / 2 - 200 : 0,
-            y: box.height ? box.height / 2 - 250 : 0,
+            x: box.width ? box.width / 2 - newVal.width / 2 : 0,
+            y: box.height ? box.height / 2 - newVal.height / 2 : 0,
             textAlign: 'center',
             zIndex: 0,
+            showShadow: false,
         }
     )
+
+    if (newVal.showShadow) {
+        text.shadow = {
+            x: 0,
+            y: 0,
+            blur: 0,
+            color: '#000'
+        }
+    } else {
+        text.shadow = undefined
+    }
+
+    console.log('text...',text.toJSON())
+
     box.add(text)
     // 重置textData
     textStore.setTextData(null)
@@ -176,13 +203,13 @@ onMounted(() => {
             handleStore.activeTool = 'image';
         }
         menuVisible.value = false
-        
+
         event.stop()
     })
 
     // 监听拖动
     box.on(DragEvent.DRAG, (event: DragEvent) => {
-        if(handleStore.selectElement && handleStore.selectElement instanceof Text){
+        if (handleStore.selectElement && handleStore.selectElement instanceof Text) {
             console.log('text drag', event.target.x, event.target.y)
 
             // 修改text的x和y
@@ -276,6 +303,7 @@ onMounted(() => {
 })
 
 const handleSizeChange = (app: App) => {
+    boxStore.setBoxElm(box)
     setTimeout(() => {
         app.tree.zoom('fit', 200)
 
@@ -335,7 +363,7 @@ const handleSizeChange = (app: App) => {
 //         child.on(DragEvent.DRAG, useThrottle((event: MoveEvent) => {
 //             console.log('sky drag', event);
 
-//             // 计算偏移量，考虑缩放
+//             // 计算移量，考虑缩放
 //             const scale = app.tree.scale ? Number(app.tree.scale) : 1;
 //             const offsetX = (event.x - initialX) / scale;
 //             const offsetY = (event.y - initialY) / scale;

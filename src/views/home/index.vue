@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { App, PointerEvent, Image, Box, Text, WatchEvent, Event, DragEvent, MoveEvent, ResizeEvent, registerUI, dataProcessor, boundsType, TextData } from 'leafer-ui'
+import { App, PointerEvent, Image, Box, Text, WatchEvent, Event, DragEvent, MoveEvent, ResizeEvent, boundsType } from 'leafer-ui'
 import '@leafer-in/text-editor'
 import { Ruler } from 'leafer-x-ruler'
 import '@leafer-in/view'
